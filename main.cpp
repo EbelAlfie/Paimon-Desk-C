@@ -1,49 +1,48 @@
-#ifndef UNICODE
-#define UNICODE
+#if defined(UNICODE) && !defined(_UNICODE)
+    #define _UNICODE
+#elif defined(_UNICODE) && !defined(UNICODE)
+    #define UNICODE
 #endif
 
+#include <tchar.h>
 #include <windows.h>
 #include "./agent/Entity.cpp"
 
 struct Component{
-    const wchar_t* name = L"Paimon" ;
-    const char* rightIdleBody = "./entity/paimonRight.gif" ;
-    const char* leftIdleBody = "./entity/paimonLeft.gif" ; 
+    const TCHAR* name = _T("Paimon") ;
+    const wchar_t* rightIdleBody = L"./entity/paimonRight.gif" ;
+    const wchar_t* leftIdleBody = L"./entity/paimonLeft.gif" ;
     int frameIdle = 90 ;
 };
 
-//proto func
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow){
+int WINAPI WinMain (HINSTANCE hThisInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR lpszArgument,
+                     int nCmdShow)
+{
+    MSG msg;
     Component paimon;
-    Entity creature = Entity(paimon.name, hInstance);
+    Entity creature = Entity(
+        paimon.name, 
+        paimon.rightIdleBody, 
+        paimon.leftIdleBody, 
+        paimon.frameIdle,
+        hThisInstance) ;
 
-    creature.lpfnWndProc = WindowProc ; 
+    creature.materializeEntity() ;
 
-    RegisterClass(&creature);
+    if (!RegisterClassEx (&creature))
+        return 0;
+    
+    creature.setHandle() ;
 
-    ShowWindow(creature.materializeEntity(), nCmdShow);
+    ShowWindow (creature.hWindow, nCmdShow);
 
-    MSG msg = { };
-    while(GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessage (&msg, NULL, 0, 0))
+    {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    return 0 ;
-}
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
-    switch(uMsg) {
-        case WM_CLOSE:
-            PostQuitMessage(0);
-        return 0; 
-        case WM_PAINT:
-            PAINTSTRUCT ps ;
-            HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
-            EndPaint(hwnd, &ps);
-        return 0 ; 
-    }
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    return msg.wParam;
 }
