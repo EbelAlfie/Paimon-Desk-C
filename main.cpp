@@ -15,6 +15,8 @@ struct Component{
     int frameIdle = 90 ;
 };
 
+LRESULT CALLBACK WindowsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
 int WINAPI WinMain (HINSTANCE hThisInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR lpszArgument,
@@ -29,12 +31,24 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         paimon.frameIdle,
         hThisInstance) ;
 
-    creature.materializeEntity() ;
+    creature.lpfnWndProc = WindowsProc ;
 
     if (!RegisterClassEx (&creature))
         return 0;
     
     creature.setHandle() ;
+    
+    SetLayeredWindowAttributes(
+        creature.hWindow,
+        RGB(0, 255, 0),
+        0,
+        LWA_COLORKEY
+    ) ;
+
+    SetWindowPos(creature.hWindow, 
+                    HWND_TOPMOST, 
+                    0, 0, 0, 0, 
+                    SWP_NOMOVE | SWP_NOSIZE);
 
     ShowWindow (creature.hWindow, nCmdShow);
 
@@ -45,4 +59,12 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     }
 
     return msg.wParam;
+}
+
+LRESULT CALLBACK WindowsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    Entity* pEntity = reinterpret_cast<Entity*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    if (pEntity) {
+        return pEntity->onAlive(hwnd, message, wParam, lParam);
+    }
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }

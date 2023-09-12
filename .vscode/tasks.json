@@ -11,7 +11,9 @@
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-mwindows",
-                "-lgdiplus"
+                "-lgdiplus",
+                "-lwindowscodecs",
+                "-lole32"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -28,3 +30,5 @@
     ],
     "version": "2.0.0"
 }
+
+//default ${fileDirname}\\${fileBasenameNoExtension}.exe
