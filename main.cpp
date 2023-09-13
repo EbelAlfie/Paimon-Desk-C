@@ -7,6 +7,7 @@
 #include <tchar.h>
 #include <windows.h>
 #include "./agent/Entity.cpp"
+#pragma comment(lib, "user32.lib")
 
 struct Component{
     const TCHAR* name = _T("Paimon") ;
@@ -45,7 +46,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         LWA_COLORKEY
     ) ;
 
-    SetWindowPos(creature.hWindow, 
+    SetWindowPos (creature.hWindow, 
                     HWND_TOPMOST, 
                     0, 0, 0, 0, 
                     SWP_NOMOVE | SWP_NOSIZE);

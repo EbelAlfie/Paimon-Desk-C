@@ -31,4 +31,4 @@
     "version": "2.0.0"
 }
 
-//default ${fileDirname}\\${fileBasenameNoExtension}.exe
+//default ${fileDirname}\\${fileBasenameNoExtension}.exe widthxheight+x+y
