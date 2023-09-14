@@ -14,12 +14,13 @@ class Entity: public WNDCLASSEX {
 
         GdiplusStartupInput gdiplusStartupInput = NULL;
         ULONG_PTR gdiplusToken;
+        Image* currentBody; 
+        Image* rightBody; 
+        Image* leftBody ;
+        PropertyItem* frameDelay ;
         int frame;
         UINT move = 0; 
-        Image* currentBody = nullptr ;
-        Image* rightBody = nullptr ; 
-        Image* leftBody = nullptr ;
-        PropertyItem* frameDelay = nullptr ;
+        
         UINT TIMER_ANIM = 1 ;
 
         Entity(
@@ -39,7 +40,7 @@ class Entity: public WNDCLASSEX {
             this->cbWndExtra = 0;                      
             this->style = CS_DBLCLKS;                
             this->cbSize = sizeof (WNDCLASSEX);
-            //this->hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
+            this->hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
 
             materializeEntity();
 
@@ -49,8 +50,10 @@ class Entity: public WNDCLASSEX {
         }
 
         bool materializeEntity() {
-            GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
             this->entityBrain = new Brain() ;
+            CoInitialize(nullptr) ;
+            GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
             return true;   
         }
 
@@ -62,7 +65,7 @@ class Entity: public WNDCLASSEX {
 
         HWND createHandle() {
             return CreateWindowEx(
-                0,
+                WS_EX_LAYERED | WS_EX_TRANSPARENT, //expmn 0x00200000L
                 this->lpszClassName,
                 this->lpszClassName,
                 WS_POPUP,
@@ -71,6 +74,12 @@ class Entity: public WNDCLASSEX {
                 NULL,
                 this->hInstance, 
                 NULL);
+        }
+
+        RECT getSelfBody(HWND hwnd) {
+            RECT body ;
+            GetWindowRect(hwnd, &body) ;
+            return body ;
         }
 
         void getFrameDelay(Image* image) {
@@ -97,13 +106,14 @@ class Entity: public WNDCLASSEX {
             Graphics graphics(hdc); 
 
             getFrameDelay(this->currentBody) ;
-
+            
             graphics.DrawImage(
                 this->currentBody, 
                 0, 0, 
                 150, 150
             ) ;
             setTimer(hwnd, 1, ((UINT*)this->frameDelay[0].value)[this->move] * 10);
+            ReleaseDC(hwnd, hdc);
         }
         
         void moveEntity(HWND hwnd) { 
@@ -125,6 +135,12 @@ class Entity: public WNDCLASSEX {
         {
             switch (message)                  
             {
+                case WM_MOUSEMOVE:
+                case WM_LBUTTONDOWN:
+                case WM_LBUTTONUP:
+                case WM_RBUTTONDOWN:
+                case WM_RBUTTONUP:
+                    SendMessage(GetParent(hwnd), message, wParam, lParam);
                 case WM_DESTROY:
                     PostQuitMessage(0);   
                     disMaterializeEntity();   
@@ -138,8 +154,8 @@ class Entity: public WNDCLASSEX {
                     
                     if (!((UINT*)this->frameDelay[0].value)[this->move]) return 0 ;
 
+                    InvalidateRect(hwnd, NULL, TRUE)  ;
                     setTimer(hwnd, 1, ((UINT*)this->frameDelay[0].value)[this->move] * 10);
-                    InvalidateRect(hwnd, NULL, TRUE);
                     return 0; 
                 case WM_PAINT:
                     PAINTSTRUCT ps;
