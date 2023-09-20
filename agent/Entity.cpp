@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <gdiplus.h>
+#include <winuser.h>
+#include <wingdi.h>
 #include "./Brain.cpp"
 using namespace Gdiplus;
 #pragma comment (lib, "Gdiplus.lib")
@@ -51,7 +53,7 @@ class Entity: public WNDCLASSEX {
 
         bool materializeEntity() {
             this->entityBrain = new Brain() ;
-            CoInitialize(nullptr) ;
+            //CoInitialize(nullptr) ;
             GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
             return true;   
@@ -88,8 +90,6 @@ class Entity: public WNDCLASSEX {
             GUID* dimensionId =new GUID[count];
             image->GetFrameDimensionsList(dimensionId, count);
             
-            WCHAR strGuid[39];
-            StringFromGUID2(dimensionId[0], strGuid, 39);
             this->frame = image->GetFrameCount(&dimensionId[0]);
 
             UINT propSize = image->GetPropertyItemSize(PropertyTagFrameDelay);
@@ -104,8 +104,13 @@ class Entity: public WNDCLASSEX {
         void animateEntity(HWND hwnd, HDC hdc) {
             this->currentBody = this->rightBody;
             Graphics graphics(hdc); 
-
+            
             getFrameDelay(this->currentBody) ;
+
+            //HDC hdcMem = CreateCompatibleDC(hdc);
+            // COLORREF transparentColor = RGB(0, 255, 0); // Change this to the desired transparent color
+            // SetBkColor(hdcMem, transparentColor);
+            // SetBkMode(hdcMem, TRANSPARENT);
             
             graphics.DrawImage(
                 this->currentBody, 
@@ -162,7 +167,6 @@ class Entity: public WNDCLASSEX {
                     HDC hdc = BeginPaint(hwnd, &ps);
                     animateEntity(hwnd, hdc) ;
                     moveEntity(hwnd) ;
-                    //updateWindow(hwnd, hdc) ;
                     EndPaint(hwnd, &ps);
                     return 0;            
             }

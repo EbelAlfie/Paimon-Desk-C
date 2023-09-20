@@ -37,10 +37,12 @@ class Brain {
     }
 
     POINT calculatePosition(POINT target, RECT self) {
-        int centerX = abs(self.right - self.left)/2 ;
-        int centerY = abs(self.bottom - self.top)/2 ;
-        int targX = target.x - centerX ;
-        int targY = target.y - centerY ;
-        return { centerX + targX, centerY + targY };
+        //pivotnya top left (0,0)
+        int movToX = 30 + target.x;
+        int movToY = 30 + target.y;
+        return { 
+            (movToX >= 1980)? 1980 : movToX , 
+            (movToY >= 1080)? 1080 : movToY  
+            };
     }
 };
