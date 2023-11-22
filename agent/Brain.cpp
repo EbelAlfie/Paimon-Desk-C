@@ -9,7 +9,7 @@ class Brain {
 
     }
 
-    POINT getTargetPosition(int mode) {
+    POINT getTargetPosition(HWND hwnd, int mode) {
         POINT lpPoint ;
         switch (mode) {
             case 1: 
@@ -31,18 +31,18 @@ class Brain {
     }
 
     bool determineOrientation(HWND hwnd, int mode) {
-        POINT target = getTargetPosition(mode) ;
+        POINT target = getTargetPosition(hwnd, mode) ;
         RECT self = getBodyPosition(hwnd);
         return true ; //sementara 
     }
 
     POINT calculatePosition(POINT target, RECT self) {
         //pivotnya top left (0,0)
-        int movToX = 30 + target.x;
-        int movToY = 30 + target.y;
-        return { 
-            (movToX >= 1980)? 1980 : movToX , 
-            (movToY >= 1080)? 1080 : movToY  
-            };
+        int centerX = abs(self.right - self.left)/2 ;
+        int centerY = abs(self.bottom - self.top)/2 ;
+        int targX = target.x - centerX ;
+        int targY = target.y - centerY ;
+        //return { self.left, self.top };
+        return { centerX + targX, centerY + targY };
     }
 };
