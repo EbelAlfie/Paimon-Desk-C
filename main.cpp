@@ -38,13 +38,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         return 0;
     
     creature.setHandle() ;
-    
-    SetLayeredWindowAttributes(
-        creature.hWindow,
-        RGB(0, 255, 0),
-        0,
-        LWA_COLORKEY
-    ) ;
+
+    creature.materializeEntity() ;
 
     SetWindowPos (creature.hWindow, 
                     HWND_TOPMOST, 
@@ -52,7 +47,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                     SWP_NOMOVE | SWP_NOSIZE);
 
     ShowWindow (creature.hWindow, nCmdShow);
-
+    UpdateWindow(creature.hWindow); 
+    
     while (GetMessage (&msg, NULL, 0, 0))
     {
         TranslateMessage(&msg);
