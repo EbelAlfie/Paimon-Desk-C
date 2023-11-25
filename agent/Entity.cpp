@@ -164,7 +164,7 @@ class Entity: public WNDCLASSEX {
                     moveEntity(hwnd) ;
                     //updateWindow(hwnd, hdc) ;
                     EndPaint(hwnd, &ps);
-                    return 0;            
+                    break ; //do not use return 0            
             }
             return DefWindowProc (hwnd, message, wParam, lParam);
         }
