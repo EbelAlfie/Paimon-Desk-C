@@ -20,6 +20,9 @@ class Entity: public WNDCLASSEX {
         typedef WNDCLASSEX super;
         ComPtr<ID2D1DeviceContext> dc;
         ComPtr<IDXGISwapChain1> swapChain;
+        ComPtr<ID2D1Bitmap1> bitmap;
+        ComPtr<IDXGIDevice> dxgiDevice ;
+        ComPtr<IDCompositionDevice> dcompDevice;
 
         Brain* entityBrain;
         HWND hWindow;
@@ -61,7 +64,7 @@ class Entity: public WNDCLASSEX {
             );
             if (hr != S_OK) return false;
             
-            //if (initializeCanvas() != true) return false;
+            if (initializeCanvas() != true) return false;
 
             return true;   
         }
@@ -96,8 +99,8 @@ class Entity: public WNDCLASSEX {
             );
             if (hr != S_OK) return false ;
 
-            ComPtr<IDXGIDevice> dxgiDevice ;
-            hr = d3dDevice.As(&dxgiDevice) ;
+            
+            hr = d3dDevice.As(&this->dxgiDevice) ;
             if (hr != S_OK) return false ;
 
             ComPtr<IDXGIFactory2> dxFactory;
@@ -159,7 +162,7 @@ class Entity: public WNDCLASSEX {
             // Retrieve the swap chain's back buffer
             ComPtr<IDXGISurface2> surface;
             hr = this->swapChain->GetBuffer(
-                0, // index
+                0,
                 __uuidof(surface),
                 reinterpret_cast<void **>(surface.GetAddressOf())
             );
@@ -171,27 +174,45 @@ class Entity: public WNDCLASSEX {
             properties.pixelFormat.format    = DXGI_FORMAT_B8G8R8A8_UNORM;
             properties.bitmapOptions         = D2D1_BITMAP_OPTIONS_TARGET |
                                             D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-            ComPtr<ID2D1Bitmap1> bitmap;
+
             hr = this->dc->CreateBitmapFromDxgiSurface(
                 surface.Get(),
                 properties,
-                bitmap.GetAddressOf()
+                this->bitmap.GetAddressOf()
             );
             if (hr != S_OK) return false ;
 
             // Point the device context to the bitmap for rendering
-            this->dc->SetTarget(bitmap.Get());
+            this->dc->SetTarget(this->bitmap.Get());
 
-            ComPtr<IDCompositionDevice> dcompDevice;
             hr = DCompositionCreateDevice(
-                dxgiDevice.Get(),
+                this->dxgiDevice.Get(),
                 __uuidof(dcompDevice),
                 reinterpret_cast<void **>(dcompDevice.GetAddressOf())
             );
             if (hr != S_OK) return false;
 
-            
+            ComPtr<IDCompositionTarget> target;
+            hr = dcompDevice->CreateTargetForHwnd(
+                this->hWindow,
+                true, 
+                target.GetAddressOf()
+            );
+            if (hr != S_OK) return false;
 
+            ComPtr<IDCompositionVisual> visual;
+            hr = dcompDevice->CreateVisual(visual.GetAddressOf());
+            if (hr != S_OK) return false;
+
+            hr = visual->SetContent(swapChain.Get());
+            if (hr != S_OK) return false;
+
+            hr = target->SetRoot(visual.Get()) ;
+            if (hr != S_OK) return false;
+
+            hr = dcompDevice->Commit() ;
+
+            this->animateEntity(this->hWindow) ;
             return (hr == S_OK)? true : false ;
         }
 
@@ -221,7 +242,11 @@ class Entity: public WNDCLASSEX {
             return body ;
         }
 
-        void animateEntity(HWND hwnd) {
+        bool animateEntity(HWND hwnd) {
+            static int i = -1;
+            i++;
+            if (i >= 3) i = 0;
+            float alpha[] = { 0.25f, 0.5f, 1.0f };
             // Draw something
             this->dc->BeginDraw();
             this->dc->Clear();
@@ -229,12 +254,12 @@ class Entity: public WNDCLASSEX {
             D2D1_COLOR_F const brushColor = D2D1::ColorF(0.18f,  // red
                                                         0.55f,  // green
                                                         0.34f,  // blue
-                                                        0.75f); // alpha
+                                                        alpha[i]); // alpha
             HRESULT hr = this->dc->CreateSolidColorBrush(
                 brushColor,
                 brush.GetAddressOf()
             );
-            if (hr != S_OK) return ;
+            if (hr != S_OK) return false;
 
             D2D1_POINT_2F const ellipseCenter = D2D1::Point2F(150.0f,  // x
                                                             150.0f); // y
@@ -245,6 +270,8 @@ class Entity: public WNDCLASSEX {
             hr = this->dc->EndDraw();
             // Make the swap chain available to the composition engine
             hr = this->swapChain->Present(1, 0); 
+
+            return (hr != S_OK)? true : false;
         }
         
         void moveEntity(HWND hwnd) { 
@@ -270,17 +297,22 @@ class Entity: public WNDCLASSEX {
                 case WM_LBUTTONUP:
                 case WM_RBUTTONDOWN:
                 case WM_RBUTTONUP:
-                    //SendMessage(GetParent(hwnd), message, wParam, lParam);
+                    SendMessage(GetParent(hwnd), message, wParam, lParam);
+                case WM_NCHITTEST: {
+                    LRESULT hit = DefWindowProc(hwnd, message, wParam, lParam);
+                    if (hit == HTCLIENT) hit = HTCAPTION;
+                    return hit;
+                }
                 case WM_DESTROY:
-                    //PostQuitMessage(0);   
-                    //disMaterializeEntity();   
+                    PostQuitMessage(0);   
+                    disMaterializeEntity();   
                     return 0;
                 case WM_TIMER:
                     
                     return 0; 
                 case WM_PAINT:
                     //PAINTSTRUCT ps;
-                    ///HDC hdc = BeginPaint(hwnd, &ps);
+                    //HDC hdc = BeginPaint(hwnd, &ps);
                     animateEntity(hwnd) ;
                     //moveEntity(hwnd) ;
                     //EndPaint(hwnd, &ps);
