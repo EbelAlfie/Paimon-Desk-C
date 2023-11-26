@@ -47,7 +47,6 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                     SWP_NOMOVE | SWP_NOSIZE);
 
     ShowWindow (creature.hWindow, nCmdShow);
-    UpdateWindow(creature.hWindow); 
     
     while (GetMessage (&msg, NULL, 0, 0))
     {

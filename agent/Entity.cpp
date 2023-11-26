@@ -1,11 +1,11 @@
 #include <Windows.h>
 #include <winuser.h>
-#include "./Brain.cpp"
 #include <dxgi1_3.h>
 #include <d3d11_2.h>
 #include <d2d1_2.h>
 #include <d2d1_2helper.h>
 #include <dcomp.h>
+#include "./Brain.cpp"
 #include <wrl.h>
 using namespace Microsoft::WRL;
 #pragma comment(lib, "dxgi")
@@ -18,11 +18,20 @@ using namespace Microsoft::WRL;
 class Entity: public WNDCLASSEX {
     public:
         typedef WNDCLASSEX super;
-        ComPtr<ID2D1DeviceContext> dc;
+        ComPtr<ID3D11Device> d3dDevice;
+        ComPtr<IDXGIDevice> dxgiDevice;
+        ComPtr<ID3D11DeviceContext> context;
+        ComPtr<IDXGIFactory2> dxFactory;
         ComPtr<IDXGISwapChain1> swapChain;
+        ComPtr<ID2D1Factory2> d2Factory;
+        ComPtr<ID2D1Device1> d2Device;
+        ComPtr<ID2D1DeviceContext> d2dContext;
+        ComPtr<IDXGISurface2> surface;
         ComPtr<ID2D1Bitmap1> bitmap;
-        ComPtr<IDXGIDevice> dxgiDevice ;
         ComPtr<IDCompositionDevice> dcompDevice;
+        ComPtr<IDCompositionTarget> target;
+        ComPtr<IDCompositionVisual> visual;
+        ComPtr<ID2D1SolidColorBrush> brush;
 
         Brain* entityBrain;
         HWND hWindow;
@@ -40,8 +49,8 @@ class Entity: public WNDCLASSEX {
         {
             this->lpszClassName = className ;
             this->hInstance = hInstance ;
-            this->hIcon = LoadIcon (NULL, IDI_APPLICATION);
-            this->hIconSm = LoadIcon (NULL, IDI_APPLICATION);
+            this->hIcon = LoadIcon (NULL, _T("../res/icon.ico"));
+            this->hIconSm = LoadIcon (NULL, _T("../res/icon.ico"));
             this->hCursor = LoadCursor (NULL, IDC_ARROW);
             this->lpszMenuName = NULL;                 
             this->cbClsExtra = 0;                      
@@ -51,8 +60,8 @@ class Entity: public WNDCLASSEX {
             this->hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
 
             this->frame = frame; 
-            // this->rightBody = new Image(rightIdleBody) ;
-            // this->leftBody = new Image(leftIdleBody) ;
+            this->rightBody = new Image(rightIdleBody) ;
+            this->leftBody = new Image(leftIdleBody) ;
         }
 
         bool materializeEntity() {
@@ -81,10 +90,7 @@ class Entity: public WNDCLASSEX {
                 D3D_FEATURE_LEVEL_9_2,
                 D3D_FEATURE_LEVEL_9_1
             };
-
-
-            ComPtr<ID3D11Device> d3dDevice;
-            ComPtr<ID3D11DeviceContext> context;
+            
             HRESULT hr = D3D11CreateDevice(
                 nullptr,
                 D3D_DRIVER_TYPE_HARDWARE,
@@ -103,7 +109,6 @@ class Entity: public WNDCLASSEX {
             hr = d3dDevice.As(&this->dxgiDevice) ;
             if (hr != S_OK) return false ;
 
-            ComPtr<IDXGIFactory2> dxFactory;
             hr = CreateDXGIFactory2(
                 DXGI_CREATE_FACTORY_DEBUG,
                 __uuidof(dxFactory),
@@ -134,7 +139,6 @@ class Entity: public WNDCLASSEX {
             if (hr != S_OK) return false ;
 
             // Create a single-threaded Direct2D factory with debugging information
-            ComPtr<ID2D1Factory2> d2Factory;
             D2D1_FACTORY_OPTIONS const options = { D2D1_DEBUG_LEVEL_INFORMATION };
             hr = D2D1CreateFactory(
                 D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -144,7 +148,6 @@ class Entity: public WNDCLASSEX {
             if (hr != S_OK) return false ;
 
             // Create the Direct2D device that links back to the Direct3D device
-            ComPtr<ID2D1Device1> d2Device;
             hr = d2Factory->CreateDevice(
                 dxgiDevice.Get(),
                 d2Device.GetAddressOf()
@@ -155,12 +158,11 @@ class Entity: public WNDCLASSEX {
             // and exposes drawing commands
             hr = d2Device->CreateDeviceContext(
                 D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-                this->dc.GetAddressOf()
+                this->d2dContext.GetAddressOf()
             );
             if (hr != S_OK) return false ;
 
             // Retrieve the swap chain's back buffer
-            ComPtr<IDXGISurface2> surface;
             hr = this->swapChain->GetBuffer(
                 0,
                 __uuidof(surface),
@@ -175,7 +177,7 @@ class Entity: public WNDCLASSEX {
             properties.bitmapOptions         = D2D1_BITMAP_OPTIONS_TARGET |
                                             D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
 
-            hr = this->dc->CreateBitmapFromDxgiSurface(
+            hr = this->d2dContext->CreateBitmapFromDxgiSurface(
                 surface.Get(),
                 properties,
                 this->bitmap.GetAddressOf()
@@ -183,7 +185,7 @@ class Entity: public WNDCLASSEX {
             if (hr != S_OK) return false ;
 
             // Point the device context to the bitmap for rendering
-            this->dc->SetTarget(this->bitmap.Get());
+            this->d2dContext->SetTarget(this->bitmap.Get());
 
             hr = DCompositionCreateDevice(
                 this->dxgiDevice.Get(),
@@ -192,7 +194,6 @@ class Entity: public WNDCLASSEX {
             );
             if (hr != S_OK) return false;
 
-            ComPtr<IDCompositionTarget> target;
             hr = dcompDevice->CreateTargetForHwnd(
                 this->hWindow,
                 true, 
@@ -200,7 +201,6 @@ class Entity: public WNDCLASSEX {
             );
             if (hr != S_OK) return false;
 
-            ComPtr<IDCompositionVisual> visual;
             hr = dcompDevice->CreateVisual(visual.GetAddressOf());
             if (hr != S_OK) return false;
 
@@ -212,7 +212,6 @@ class Entity: public WNDCLASSEX {
 
             hr = dcompDevice->Commit() ;
 
-            this->animateEntity(this->hWindow) ;
             return (hr == S_OK)? true : false ;
         }
 
@@ -243,31 +242,26 @@ class Entity: public WNDCLASSEX {
         }
 
         bool animateEntity(HWND hwnd) {
-            static int i = -1;
-            i++;
-            if (i >= 3) i = 0;
-            float alpha[] = { 0.25f, 0.5f, 1.0f };
-            // Draw something
-            this->dc->BeginDraw();
-            this->dc->Clear();
+            this->d2dContext->BeginDraw();
+            this->d2dContext->Clear();
             ComPtr<ID2D1SolidColorBrush> brush;
             D2D1_COLOR_F const brushColor = D2D1::ColorF(0.18f,  // red
                                                         0.55f,  // green
                                                         0.34f,  // blue
-                                                        alpha[i]); // alpha
-            HRESULT hr = this->dc->CreateSolidColorBrush(
+                                                        0.75f); // alpha
+            HRESULT hr = this->d2dContext->CreateSolidColorBrush(
                 brushColor,
                 brush.GetAddressOf()
             );
             if (hr != S_OK) return false;
 
-            D2D1_POINT_2F const ellipseCenter = D2D1::Point2F(150.0f,  // x
-                                                            150.0f); // y
+            D2D1_POINT_2F const ellipseCenter = D2D1::Point2F(150.0f, 
+                                                            150.0f); 
             D2D1_ELLIPSE const ellipse = D2D1::Ellipse(ellipseCenter,
-                                                    100.0f,  // x radius
-                                                    100.0f); // y radius
-            this->dc->FillEllipse(ellipse, brush.Get());
-            hr = this->dc->EndDraw();
+                                                    100.0f,  
+                                                    100.0f ); 
+            this->d2dContext->FillEllipse(ellipse, brush.Get());
+            hr = this->d2dContext->EndDraw();
             // Make the swap chain available to the composition engine
             hr = this->swapChain->Present(1, 0); 
 
@@ -292,12 +286,6 @@ class Entity: public WNDCLASSEX {
         {
             switch (message)                  
             {
-                case WM_MOUSEMOVE:
-                case WM_LBUTTONDOWN:
-                case WM_LBUTTONUP:
-                case WM_RBUTTONDOWN:
-                case WM_RBUTTONUP:
-                    SendMessage(GetParent(hwnd), message, wParam, lParam);
                 case WM_NCHITTEST: {
                     LRESULT hit = DefWindowProc(hwnd, message, wParam, lParam);
                     if (hit == HTCLIENT) hit = HTCAPTION;
@@ -307,16 +295,10 @@ class Entity: public WNDCLASSEX {
                     PostQuitMessage(0);   
                     disMaterializeEntity();   
                     return 0;
-                case WM_TIMER:
-                    
-                    return 0; 
                 case WM_PAINT:
-                    //PAINTSTRUCT ps;
-                    //HDC hdc = BeginPaint(hwnd, &ps);
                     animateEntity(hwnd) ;
                     //moveEntity(hwnd) ;
-                    //EndPaint(hwnd, &ps);
-                    return 0;            
+                    break ; //return 0; is bad     
             }
             return DefWindowProc (hwnd, message, wParam, lParam);
         }
