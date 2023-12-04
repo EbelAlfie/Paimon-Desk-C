@@ -68,7 +68,7 @@ class Entity: public WNDCLASSEX {
                 WS_EX_NOREDIRECTIONBITMAP, //expmn 0x00200000L
                 this->lpszClassName,
                 this->lpszClassName,
-                WS_VISIBLE,
+                WS_POPUP | WS_VISIBLE,
                 300, 200, 200, 200,//150, 150,
                 nullptr,
                 nullptr,
@@ -97,7 +97,11 @@ class Entity: public WNDCLASSEX {
         }
 
         void disMaterializeEntity(){ 
-            
+            windowCanvas->destroy() ;
+            rightBody->erase();
+            leftBody->erase();
+            free(entityBrain) ;
+            free(windowCanvas) ;
         }
 
         void setTimer(HWND hwnd, UINT timerId, UINT value) {

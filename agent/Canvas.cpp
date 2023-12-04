@@ -196,5 +196,24 @@ class Canvas {
         hr = this->d2dContext->EndDraw();
         // Make the swap chain available to the composition engine
         hr = this->swapChain->Present(1, 0);
+        return (hr != S_OK)? true : false;
+    } 
+
+    bool destroy() {
+        d3dDevice->Release();
+        dxgiDevice->Release();
+        context->Release();
+        dxFactory->Release();
+        swapChain->Release();
+        d2Factory->Release();
+        d2Device->Release();
+        d2dContext->Release();
+        surface->Release();
+        bitmap->Release();
+        dcompDevice->Release();
+        target->Release();
+        visual->Release();
+        brush->Release();
+        return true ;
     }
 };

@@ -72,4 +72,15 @@ class GifImage {
 
         return (hr == S_OK) ? frameBitmap : nullptr ;
     }
+
+
+    bool erase() {
+        wicFactory->Release();
+        decoder->Release();
+        frame->Release();
+        formatConverter->Release();
+
+        free(&imgPath) ;
+        return true  ;
+    }
 }; 
