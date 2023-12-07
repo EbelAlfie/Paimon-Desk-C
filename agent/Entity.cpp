@@ -1,9 +1,8 @@
 #include <Windows.h>
 #include <winuser.h>
 #include "./Brain.cpp"
-#include "./GifImage.cpp"
+#include "./Gif.cpp"
 #include "./Canvas.cpp"
-
 #pragma comment(lib, "user32.lib")
 
 class Entity: public WNDCLASSEX {
@@ -14,10 +13,11 @@ class Entity: public WNDCLASSEX {
         Brain* entityBrain;
         Canvas* windowCanvas; 
 
-        GifImage* rightBody;
-        GifImage* leftBody;
+        Gif* rightBody;
+        Gif* leftBody;
 
         int frame;
+        int frameIdx = 0 ;
         UINT move = 0; 
         UINT TIMER_ANIM = 1 ;
 
@@ -36,8 +36,8 @@ class Entity: public WNDCLASSEX {
             this->cbSize = sizeof (WNDCLASSEX);
 
             this->frame = frame; 
-            this->rightBody = new GifImage(rightIdleBody) ;
-            this->leftBody = new GifImage(leftIdleBody) ;
+            this->rightBody = new Gif(rightIdleBody) ;
+            this->leftBody = new Gif(leftIdleBody) ;
         }
 
         bool materializeEntity() {
@@ -68,7 +68,7 @@ class Entity: public WNDCLASSEX {
                 WS_EX_NOREDIRECTIONBITMAP, //expmn 0x00200000L
                 this->lpszClassName,
                 this->lpszClassName,
-                WS_POPUP | WS_VISIBLE,
+                WS_VISIBLE,
                 300, 200, 200, 200,//150, 150,
                 nullptr,
                 nullptr,
@@ -83,10 +83,16 @@ class Entity: public WNDCLASSEX {
             return body ;
         }
 
-        bool animateEntity(HWND hwnd) { 
-            windowCanvas->drawEntity() ;
-            //return (hr != S_OK)? true : false;
-            return true ;
+        void animateEntity(HWND hwnd) { 
+            ComPtr<ID2D1Bitmap> frame = 
+                this->rightBody->getBitmapFrameAt(
+                    frameIdx, 
+                    windowCanvas->d2dContext
+                ) ;
+
+            windowCanvas->draw(frame) ;
+            //windowCanvas->drawEntity() ;
+            frameIdx = (frameIdx + 1) % this->frame; //this->rightBody->getFrameCount() ;
         }
         
         void moveEntity(HWND hwnd) { 
@@ -124,7 +130,7 @@ class Entity: public WNDCLASSEX {
                 case WM_PAINT:
                     animateEntity(hwnd) ;
                     //moveEntity(hwnd) ;
-                    break ; //return 0; is bad     
+                    return 0 ; 
             }
             return DefWindowProc (hwnd, message, wParam, lParam);
         }

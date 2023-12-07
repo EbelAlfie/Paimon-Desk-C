@@ -5,6 +5,7 @@
 #include <d2d1_2helper.h>
 #include <dcomp.h>
 #include <wrl.h>
+#include "./Gif.cpp"
 using namespace Microsoft::WRL;
 #pragma comment(lib, "dxgi")
 #pragma comment(lib, "d3d11")
@@ -22,7 +23,7 @@ class Canvas {
         ComPtr<IDXGISwapChain1> swapChain;
         ComPtr<ID2D1Factory2> d2Factory;
         ComPtr<ID2D1Device1> d2Device;
-        ComPtr<ID2D1DeviceContext> d2dContext;
+        
         ComPtr<IDXGISurface2> surface;
         ComPtr<ID2D1Bitmap1> bitmap;
         ComPtr<IDCompositionDevice> dcompDevice;
@@ -30,6 +31,7 @@ class Canvas {
         ComPtr<IDCompositionVisual> visual;
         ComPtr<ID2D1SolidColorBrush> brush;
     public:
+        ComPtr<ID2D1DeviceContext> d2dContext;
         Canvas(HWND* hWindow) {
             window = hWindow ;
         }
@@ -195,6 +197,34 @@ class Canvas {
 
         hr = this->d2dContext->EndDraw();
         // Make the swap chain available to the composition engine
+        hr = this->swapChain->Present(1, 0);
+        return (hr != S_OK)? true : false;
+    } 
+
+    bool draw(ComPtr<ID2D1Bitmap> image) {
+        if (image == nullptr) return false;
+        d2dContext->BeginDraw();
+        d2dContext->Clear();
+        ComPtr<ID2D1SolidColorBrush> brush;
+        D2D1_COLOR_F const brushColor = D2D1::ColorF(0.18f,  // red
+                                                    0.55f,  // green
+                                                    0.34f,  // blue
+                                                    0.75f); // alpha
+        HRESULT hr = d2dContext->CreateSolidColorBrush(
+            brushColor,
+            brush.GetAddressOf()
+        );
+        if (hr != S_OK) return false;
+
+        d2dContext->DrawBitmap(
+            image.Get(), 
+            nullptr,
+            1.0F,
+            D2D1_INTERPOLATION_MODE_LINEAR,
+            nullptr
+        ); 
+
+        hr = d2dContext->EndDraw();
         hr = this->swapChain->Present(1, 0);
         return (hr != S_OK)? true : false;
     } 
