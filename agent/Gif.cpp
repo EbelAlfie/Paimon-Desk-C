@@ -10,14 +10,13 @@ class Gif {
     private:
     ComPtr<IWICImagingFactory> wicFactory;
     ComPtr<IWICBitmapDecoder> decoder;
-    ComPtr<IWICBitmapFrameDecode> frame;
-    ComPtr<IWICFormatConverter> formatConverter;
-    ComPtr<ID2D1Bitmap> frameBitmap ;
 
     const wchar_t* imgPath ;
     UINT* frameCount ;
+    UINT frameDelay = 0 ;
 
     public:
+    ComPtr<ID2D1Bitmap> frameBitmap ;
     Gif(const wchar_t* path) {
         this->imgPath = path ;
     }
@@ -40,9 +39,6 @@ class Gif {
             );
         if (hr != S_OK) return nullptr ;
 
-        hr = wicFactory->CreateFormatConverter(&formatConverter);
-        if (hr != S_OK) return nullptr ;
-
         // hr = decoder->GetFrameCount(frameCount);
         // if (hr != S_OK) return nullptr ;
 
@@ -57,12 +53,23 @@ class Gif {
         return (frameCount != nullptr) ? *frameCount : 1 ; 
     }
 
+    UINT getFrameDelay() {
+        return (frameDelay == NULL) ? 0 : frameDelay ;
+    }
+
     ComPtr<ID2D1Bitmap> getBitmapFrameAt(
         int index,
         ComPtr<ID2D1DeviceContext> d2dContext
         ) {
 
+        ComPtr<IWICBitmapFrameDecode> frame = nullptr;
+        ComPtr<IWICFormatConverter> formatConverter = nullptr;
+        ComPtr<IWICMetadataQueryReader> metadataReader = nullptr;
+
         HRESULT hr = decoder->GetFrame(index, &frame);
+        if (hr != S_OK) return nullptr ;
+
+        hr = wicFactory->CreateFormatConverter(&formatConverter);
         if (hr != S_OK) return nullptr ;
         
         hr = formatConverter->Initialize(
@@ -80,19 +87,62 @@ class Gif {
             nullptr,
             &frameBitmap
         );
+        if (hr != S_OK) return nullptr ;
 
-        formatConverter->Reset() ;
+        hr = frame->GetMetadataQueryReader(&metadataReader);
+        if (hr != S_OK) return nullptr ;
+
+        PROPVARIANT propValue;
+        PropVariantInit(&propValue);
+
+        hr = metadataReader->GetMetadataByName(
+            L"/grctlext/Delay", 
+            &propValue
+        );
+        if (hr != S_OK || propValue.vt != VT_UI2) return nullptr; 
+
+        hr = UIntMult(propValue.uiVal, 10, &frameDelay);
+        PropVariantClear(&propValue);
+        if (hr != S_OK) return nullptr; 
+
+        formatConverter->Release() ;
 
         return (hr == S_OK) ? frameBitmap : nullptr ;
     }
+
+    // bool toNextFrame(
+    //     int index,
+    //     ComPtr<ID2D1DeviceContext> d2dContext
+    // ) {
+
+    //     HRESULT hr = decoder->GetFrame(index, &frame);
+    //     if (hr != S_OK) return nullptr ;
+        
+    //     hr = formatConverter->Initialize(
+    //         frame.Get(),
+    //         GUID_WICPixelFormat32bppPBGRA,  
+    //         WICBitmapDitherTypeNone,
+    //         nullptr,
+    //         0.0f,
+    //         WICBitmapPaletteTypeCustom  
+    //     );
+    //     if (hr != S_OK) return nullptr ;
+
+    //     hr = d2dContext->CreateBitmapFromWicBitmap(
+    //         formatConverter.Get(),
+    //         nullptr,
+    //         &frameBitmap
+    //     );
+
+    //     formatConverter->Release() ;
+
+    //     return (hr == S_OK) ? frameBitmap : nullptr ;
+    // }
 
 
     bool erase() {
         wicFactory->Release();
         decoder->Release();
-        frame->Release();
-        formatConverter->Release();
-
         free(&imgPath) ;
         return true  ;
     }

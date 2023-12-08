@@ -203,6 +203,7 @@ class Canvas {
 
     bool draw(ComPtr<ID2D1Bitmap> image) {
         if (image == nullptr) return false;
+        //if (d2dContext->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED)
         d2dContext->BeginDraw();
         d2dContext->Clear();
         ComPtr<ID2D1SolidColorBrush> brush;

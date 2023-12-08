@@ -68,7 +68,7 @@ class Entity: public WNDCLASSEX {
                 WS_EX_NOREDIRECTIONBITMAP, //expmn 0x00200000L
                 this->lpszClassName,
                 this->lpszClassName,
-                WS_VISIBLE,
+                WS_POPUP | WS_VISIBLE,
                 300, 200, 200, 200,//150, 150,
                 nullptr,
                 nullptr,
@@ -92,6 +92,7 @@ class Entity: public WNDCLASSEX {
 
             windowCanvas->draw(frame) ;
             //windowCanvas->drawEntity() ;
+            frame->Release() ;
             frameIdx = (frameIdx + 1) % this->frame; //this->rightBody->getFrameCount() ;
         }
         
@@ -131,6 +132,17 @@ class Entity: public WNDCLASSEX {
                     animateEntity(hwnd) ;
                     //moveEntity(hwnd) ;
                     return 0 ; 
+                case WM_DISPLAYCHANGE:
+                    InvalidateRect(hwnd, NULL, FALSE);
+                    break;
+                case WM_TIMER:
+                    // this->rightBody->getNextFrame(
+                    //     this->frameIdx, 
+                    //     this->windowCanvas->d2dContext
+                    // ); 
+                    KillTimer(hwnd, 123);
+                    SetTimer(hwnd, 123, this->rightBody->getFrameDelay(), NULL);
+                    InvalidateRect(hwnd, NULL, FALSE);
             }
             return DefWindowProc (hwnd, message, wParam, lParam);
         }
