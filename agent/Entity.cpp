@@ -85,10 +85,8 @@ class Entity: public WNDCLASSEX {
 
         void animateEntity(HWND hwnd) { 
             ComPtr<ID2D1Bitmap> frame = 
-                this->rightBody->getBitmapFrameAt(
-                    frameIdx, 
-                    windowCanvas->d2dContext
-                ) ;
+                this->rightBody->getFrame();
+                
 
             windowCanvas->draw(frame) ;
             //windowCanvas->drawEntity() ;
@@ -136,11 +134,11 @@ class Entity: public WNDCLASSEX {
                     InvalidateRect(hwnd, NULL, FALSE);
                     break;
                 case WM_TIMER:
-                    // this->rightBody->getNextFrame(
-                    //     this->frameIdx, 
-                    //     this->windowCanvas->d2dContext
-                    // ); 
                     KillTimer(hwnd, 123);
+                    this->rightBody->getBitmapFrameAt(
+                        frameIdx, 
+                        windowCanvas->d2dContext
+                    ) ;
                     SetTimer(hwnd, 123, this->rightBody->getFrameDelay(), NULL);
                     InvalidateRect(hwnd, NULL, FALSE);
             }
