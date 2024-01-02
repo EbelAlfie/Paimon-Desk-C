@@ -2,6 +2,7 @@
 #include <winuser.h>
 #include "./Brain.cpp"
 #include "./Gif.cpp"
+#include "./Gif2.cpp"
 #include "./Canvas.cpp"
 #pragma comment(lib, "user32.lib")
 
@@ -85,12 +86,14 @@ class Entity: public WNDCLASSEX {
 
         void animateEntity(HWND hwnd) { 
             ComPtr<ID2D1Bitmap> frame = 
-                this->rightBody->getFrame();
-                
+                this->rightBody->getBitmapFrameAt(
+                    frameIdx,
+                    windowCanvas->d2dContext
+                );
 
             windowCanvas->draw(frame) ;
-            //windowCanvas->drawEntity() ;
-            frame->Release() ;
+
+            //frame->Release() ;
             frameIdx = (frameIdx + 1) % this->frame; //this->rightBody->getFrameCount() ;
         }
         
@@ -131,14 +134,9 @@ class Entity: public WNDCLASSEX {
                     //moveEntity(hwnd) ;
                     return 0 ; 
                 case WM_DISPLAYCHANGE:
-                    InvalidateRect(hwnd, NULL, FALSE);
                     break;
                 case WM_TIMER:
                     KillTimer(hwnd, 123);
-                    this->rightBody->getBitmapFrameAt(
-                        frameIdx, 
-                        windowCanvas->d2dContext
-                    ) ;
                     SetTimer(hwnd, 123, this->rightBody->getFrameDelay(), NULL);
                     InvalidateRect(hwnd, NULL, FALSE);
             }

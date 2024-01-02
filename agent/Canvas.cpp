@@ -25,7 +25,7 @@ class Canvas {
         ComPtr<ID2D1Device1> d2Device;
         
         ComPtr<IDXGISurface2> surface;
-        ComPtr<ID2D1Bitmap1> bitmap;
+        ComPtr<ID2D1Bitmap1> bitmapTarget;
         ComPtr<IDCompositionDevice> dcompDevice;
         ComPtr<IDCompositionTarget> target;
         ComPtr<IDCompositionVisual> visual;
@@ -138,12 +138,12 @@ class Canvas {
         hr = this->d2dContext->CreateBitmapFromDxgiSurface(
             surface.Get(),
             properties,
-            this->bitmap.GetAddressOf()
+            this->bitmapTarget.GetAddressOf()
         );
         if (hr != S_OK) return false ;
 
         // Point the device context to the bitmap for rendering
-        this->d2dContext->SetTarget(this->bitmap.Get());
+        this->d2dContext->SetTarget(this->bitmapTarget.Get());
 
         hr = DCompositionCreateDevice(
             this->dxgiDevice.Get(),
@@ -239,7 +239,7 @@ class Canvas {
         d2Device->Release();
         d2dContext->Release();
         surface->Release();
-        bitmap->Release();
+        bitmapTarget->Release();
         dcompDevice->Release();
         target->Release();
         visual->Release();
