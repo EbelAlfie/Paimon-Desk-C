@@ -47,7 +47,6 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                     SWP_NOMOVE | SWP_NOSIZE);
 
     ShowWindow (creature.hWindow, nCmdShow);
-    UpdateWindow(creature.hWindow); 
     
     while (GetMessage (&msg, NULL, 0, 0))
     {
@@ -60,8 +59,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
 LRESULT CALLBACK WindowsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     Entity* pEntity = reinterpret_cast<Entity*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-    if (pEntity) {
+    if (pEntity)
         return pEntity->onAlive(hwnd, message, wParam, lParam);
-    }
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
