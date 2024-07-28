@@ -12,7 +12,7 @@ class Gif {
     ComPtr<IWICBitmapDecoder> decoder;
 
     const wchar_t* imgPath ;
-    UINT* frameCount ;
+    UINT frameCount = 1 ;
     UINT frameDelay = 0 ;
 
     public:
@@ -39,18 +39,17 @@ class Gif {
             );
         if (hr != S_OK) return nullptr ;
 
-        // hr = decoder->GetFrameCount(frameCount);
-        // if (hr != S_OK) return nullptr ;
+        hr = decoder->GetFrameCount(&frameCount);
 
-        // if (frameCount == nullptr) {
-        //     *frameCount = 1 ;
-        // }
+        if (hr != S_OK) {
+            frameCount = 1 ;
+        }
 
         return hr == S_OK ;
     }
 
     UINT getFrameCount() {
-        return (frameCount != nullptr) ? *frameCount : 1 ; 
+        return (frameCount != 1) ? frameCount : 1 ; 
     }
 
     UINT getFrameDelay() {

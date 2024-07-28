@@ -26,7 +26,6 @@ class Entity: public WNDCLASSEX {
             const TCHAR className[], 
             const wchar_t* rightIdleBody,
             const wchar_t* leftIdleBody,
-            int frame,
             HINSTANCE hInstance): WNDCLASSEX()
         {
             this->lpszClassName = className ;
@@ -36,7 +35,6 @@ class Entity: public WNDCLASSEX {
             this->style = CS_HREDRAW | CS_VREDRAW;                
             this->cbSize = sizeof (WNDCLASSEX);
 
-            this->frame = frame; 
             this->rightBody = new Gif(rightIdleBody) ;
             this->leftBody = new Gif(leftIdleBody) ;
         }
@@ -94,7 +92,7 @@ class Entity: public WNDCLASSEX {
             windowCanvas->draw(frame) ;
 
             //frame->Release() ;
-            frameIdx = (frameIdx + 1) % this->frame; //this->rightBody->getFrameCount() ;
+            frameIdx = (frameIdx + 1) % this->rightBody->getFrameCount() ;
         }
         
         void moveEntity(HWND hwnd) { 

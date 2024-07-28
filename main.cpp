@@ -13,7 +13,6 @@ struct Component{
     const TCHAR* name = _T("Paimon") ;
     const wchar_t* rightIdleBody = L"./entity/paimonRight.gif" ;
     const wchar_t* leftIdleBody = L"./entity/paimonLeft.gif" ;
-    int frameIdle = 90 ;
 };
 
 LRESULT CALLBACK WindowsProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -29,7 +28,6 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         paimon.name, 
         paimon.rightIdleBody, 
         paimon.leftIdleBody, 
-        paimon.frameIdle,
         hThisInstance) ;
 
     creature.lpfnWndProc = WindowsProc ;
