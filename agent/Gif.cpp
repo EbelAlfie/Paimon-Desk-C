@@ -14,13 +14,26 @@ class Gif {
     const wchar_t* imgPath ;
     UINT frameCount = 1 ;
     UINT frameDelay = 0 ;
+    
 
     public:
     ComPtr<ID2D1Bitmap> frameBitmap ;
     Gif(const wchar_t* path) {
         this->imgPath = path ;
+        initilizeGif() ; 
+        getFrameDelayMetaData() ;
     }
 
+
+    UINT getFrameCount() {
+        return (frameCount != 1) ? frameCount : 1 ; 
+    }
+
+    UINT getFrameDelay() {
+        return (frameDelay != NULL) ? frameDelay : 0 ;
+    }
+
+    private:
     bool initilizeGif() {
         HRESULT hr = CoCreateInstance(
             CLSID_WICImagingFactory,
@@ -48,12 +61,28 @@ class Gif {
         return hr == S_OK ;
     }
 
-    UINT getFrameCount() {
-        return (frameCount != 1) ? frameCount : 1 ; 
-    }
+    void getFrameDelayMetaData() {
+        PROPVARIANT propValue;
+        PropVariantInit(propValue) ;
 
-    UINT getFrameDelay() {
-        return (frameDelay != NULL) ? frameDelay : 0 ;
+        HRESULT hr = pFrameMetadataQueryReader->GetMetadataByName(
+            L"/grctlext/Delay", 
+            &propValue
+        ) ;
+
+        if (hr == S_OK)
+        {
+            hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL); 
+            if (hr == S_OK)
+            {
+                hr = UIntMult(propValue.uiVal, 10, &frameDelay);
+            }
+            PropVariantClear(&propValue);
+        }
+        else
+        {
+            frameDelay = 0;
+        }
     }
 
     ComPtr<ID2D1Bitmap> getBitmapFrameAt(

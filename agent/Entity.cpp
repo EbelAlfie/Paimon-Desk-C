@@ -50,8 +50,8 @@ class Entity: public WNDCLASSEX {
 
             windowCanvas = new Canvas(&this->hWindow) ;
             windowCanvas->initializeCanvas() ;
-            this->rightBody->initilizeGif(); 
-            this->leftBody->initilizeGif();
+            // this->rightBody->initilizeGif(); 
+            // this->leftBody->initilizeGif();
 
             return true;   
         }
