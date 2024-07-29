@@ -24,7 +24,6 @@ class Gif {
         getFrameDelayMetaData() ;
     }
 
-
     UINT getFrameCount() {
         return (frameCount != 1) ? frameCount : 1 ; 
     }
@@ -62,10 +61,18 @@ class Gif {
     }
 
     void getFrameDelayMetaData() {
-        PROPVARIANT propValue;
-        PropVariantInit(propValue) ;
+        HRESULT hr ; 
+        IWICMetadataQueryReader *pFrameMetadataQueryReader = NULL;
 
-        HRESULT hr = pFrameMetadataQueryReader->GetMetadataByName(
+        PROPVARIANT propValue;
+        PropVariantInit(&propValue) ;
+
+        if (hr == S_OK)
+        {
+            hr = pWicFrame->GetMetadataQueryReader(&pFrameMetadataQueryReader);
+        }
+
+        hr = pFrameMetadataQueryReader->GetMetadataByName(
             L"/grctlext/Delay", 
             &propValue
         ) ;
@@ -127,7 +134,20 @@ class Gif {
             L"/grctlext/Delay", 
             &propValue
         );
-        if (hr != S_OK || propValue.vt != VT_UI2) return nullptr; 
+
+        if (hr == S_OK)
+        {
+            hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL); 
+            if (hr == S_OK)
+            {
+                hr = UIntMult(propValue.uiVal, 10, &frameDelay);
+            }
+            PropVariantClear(&propValue);
+        }
+        else
+        {
+            frameDelay = 0;
+        }
 
         hr = UIntMult(propValue.uiVal, 10, &frameDelay);
         PropVariantClear(&propValue);
