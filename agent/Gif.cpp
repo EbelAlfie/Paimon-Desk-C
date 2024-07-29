@@ -14,14 +14,12 @@ class Gif {
     const wchar_t* imgPath ;
     UINT frameCount = 1 ;
     UINT frameDelay = 0 ;
-    
+
 
     public:
     ComPtr<ID2D1Bitmap> frameBitmap ;
     Gif(const wchar_t* path) {
         this->imgPath = path ;
-        initilizeGif() ; 
-        getFrameDelayMetaData() ;
     }
 
     UINT getFrameCount() {
@@ -32,7 +30,6 @@ class Gif {
         return (frameDelay != NULL) ? frameDelay : 0 ;
     }
 
-    private:
     bool initilizeGif() {
         HRESULT hr = CoCreateInstance(
             CLSID_WICImagingFactory,
@@ -60,42 +57,42 @@ class Gif {
         return hr == S_OK ;
     }
 
-    void getFrameDelayMetaData() {
-        HRESULT hr ; 
-        IWICMetadataQueryReader *pFrameMetadataQueryReader = NULL;
+    // void getFrameDelayMetaData() {
+    //     HRESULT hr ; 
+    //     IWICMetadataQueryReader *pFrameMetadataQueryReader = NULL;
 
-        PROPVARIANT propValue;
-        PropVariantInit(&propValue) ;
+    //     PROPVARIANT propValue;
+    //     PropVariantInit(&propValue) ;
 
-        if (hr == S_OK)
-        {
-            hr = pWicFrame->GetMetadataQueryReader(&pFrameMetadataQueryReader);
-        }
+    //     if (hr == S_OK)
+    //     {
+    //         hr = pWicFrame->GetMetadataQueryReader(&pFrameMetadataQueryReader);
+    //     }
 
-        hr = pFrameMetadataQueryReader->GetMetadataByName(
-            L"/grctlext/Delay", 
-            &propValue
-        ) ;
+    //     hr = pFrameMetadataQueryReader->GetMetadataByName(
+    //         L"/grctlext/Delay", 
+    //         &propValue
+    //     ) ;
 
-        if (hr == S_OK)
-        {
-            hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL); 
-            if (hr == S_OK)
-            {
-                hr = UIntMult(propValue.uiVal, 10, &frameDelay);
-            }
-            PropVariantClear(&propValue);
-        }
-        else
-        {
-            frameDelay = 0;
-        }
-    }
+    //     if (hr == S_OK)
+    //     {
+    //         hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL); 
+    //         if (hr == S_OK)
+    //         {
+    //             hr = UIntMult(propValue.uiVal, 10, &frameDelay);
+    //         }
+    //         PropVariantClear(&propValue);
+    //     }
+    //     else
+    //     {
+    //         frameDelay = 0;
+    //     }
+    // }
 
     ComPtr<ID2D1Bitmap> getBitmapFrameAt(
         int index,
         ComPtr<ID2D1DeviceContext> d2dContext
-        ) {
+    ) {
 
         ComPtr<IWICFormatConverter> formatConverter = nullptr;
         ComPtr<IWICMetadataQueryReader> metadataReader = nullptr;
@@ -148,10 +145,6 @@ class Gif {
         {
             frameDelay = 0;
         }
-
-        hr = UIntMult(propValue.uiVal, 10, &frameDelay);
-        PropVariantClear(&propValue);
-        if (hr != S_OK) return nullptr; 
 
         formatConverter->Release() ;
 
