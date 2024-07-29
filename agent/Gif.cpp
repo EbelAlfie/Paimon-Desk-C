@@ -146,6 +146,10 @@ class Gif {
             frameDelay = 0;
         }
 
+        if (hr == S_OK) {
+            frameDelay < 90 ? 90: frameDelay ;
+        }
+
         formatConverter->Release() ;
 
         return (hr == S_OK) ? frameBitmap : nullptr ;

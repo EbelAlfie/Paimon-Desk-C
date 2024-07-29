@@ -31,7 +31,7 @@ class Entity: public WNDCLASSEX {
         {
             this->lpszClassName = className ;
             this->hInstance = hInstance ;
-            this->hIcon = LoadIcon (NULL, _T("../res/icon.ico"));
+            this->hIcon = LoadIcon (hInstance, _T("../res/icon.ico"));
             this->hCursor = LoadCursor (NULL, IDC_ARROW);                  
             this->style = CS_HREDRAW | CS_VREDRAW;                
             this->cbSize = sizeof (WNDCLASSEX);

@@ -173,34 +173,6 @@ class Canvas {
         return (hr == S_OK)? true : false ;
     }
 
-    bool drawEntity() {
-        this->d2dContext->BeginDraw();
-        this->d2dContext->Clear();
-        ComPtr<ID2D1SolidColorBrush> brush;
-        D2D1_COLOR_F const brushColor = D2D1::ColorF(0.18f,  // red
-                                                    0.55f,  // green
-                                                    0.34f,  // blue
-                                                    0.75f); // alpha
-        HRESULT hr = this->d2dContext->CreateSolidColorBrush(
-            brushColor,
-            brush.GetAddressOf()
-        );
-        if (hr != S_OK) return false;
-
-        D2D1_POINT_2F const ellipseCenter = D2D1::Point2F(100.0f,  // x
-                                                    100.0f); // y
-        D2D1_ELLIPSE const ellipse = D2D1::Ellipse(ellipseCenter,
-                                                100.0f,  // x radius
-                                                100.0f); // y radius
-
-        d2dContext->FillEllipse(ellipse, brush.Get());
-
-        hr = this->d2dContext->EndDraw();
-        // Make the swap chain available to the composition engine
-        hr = this->swapChain->Present(1, 0);
-        return (hr != S_OK)? true : false;
-    } 
-
     bool draw(ComPtr<ID2D1Bitmap> image) {
         if (image == nullptr) return false;
         d2dContext->BeginDraw();
@@ -216,16 +188,24 @@ class Canvas {
         );
         if (hr != S_OK) return false;
 
+        D2D1_SIZE_F rtSize = d2dContext->GetSize();
+        D2D1_RECT_F rect = D2D1::Rect(
+            0.0f,
+            0.0f,
+            rtSize.width,
+            rtSize.height
+        );
+
         d2dContext->DrawBitmap(
             image.Get(), 
-            nullptr,
+            rect,
             1.0F,
             D2D1_INTERPOLATION_MODE_LINEAR,
             nullptr
         ); 
 
         hr = d2dContext->EndDraw();
-        hr = this->swapChain->Present(1, 0);
+        hr = this->swapChain->Present(DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, 0);
         return (hr != S_OK)? true : false;
     } 
 
