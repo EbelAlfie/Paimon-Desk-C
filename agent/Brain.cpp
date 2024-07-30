@@ -40,13 +40,13 @@ class Brain {
         //pivotnya top left (0,0)
         int centerX = abs(self.right - self.left)/2 ; //width/2
         int centerY = abs(self.bottom - self.top)/2 ; //height/2
-        int targX = target.x - centerX ;
+        int targX = centerX + target.x - 100 ;
         int targY = target.y + centerY ;
         //return { self.left, self.top };
-        return { centerX + targX, centerY + targY };
+        return { targX, target.y };
     }
 
     bool amIRightOfTarget(POINT target, RECT self) {
-        return self.x - target.x ;
+        return abs(self.right - self.left)/2 < target.x ;
     }
 };
