@@ -110,6 +110,7 @@ class Entity: public WNDCLASSEX {
                 0, 0, 
                 SWP_NOSIZE | SWP_NOZORDER
             ) ;
+            this->currentBody =  (entityBrain->amIRightOfTarget(targ, bodyPos)) ? this->rightBody : this->leftBody ;
         }
 
         void disMaterializeEntity(){ 
@@ -138,8 +139,8 @@ class Entity: public WNDCLASSEX {
                     disMaterializeEntity();   
                     return 0;
                 case WM_PAINT:
-                    animateEntity(hwnd) ;
                     moveEntity(hwnd) ;
+                    animateEntity(hwnd) ;
                     ValidateRect(hwnd, NULL);
                     return 0 ; 
                 case WM_DISPLAYCHANGE:

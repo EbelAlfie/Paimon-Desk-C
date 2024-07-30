@@ -45,4 +45,8 @@ class Brain {
         //return { self.left, self.top };
         return { centerX + targX, centerY + targY };
     }
+
+    bool amIRightOfTarget(POINT target, RECT self) {
+        return self.x - target.x ;
+    }
 };
